@@ -22,7 +22,9 @@
 #     Added correct writing of XML RSS files (using DOM)
 #     Added namespaces ('id' is now 'rm:publisher')
 #     Output feeds are now valid RSS 2.0
-
+# 0.3
+#     Multiple root nodes (xml-stylesheet) are now handled
+#
 import sys
 import urllib
 import time
@@ -32,6 +34,7 @@ from xml.dom import minidom, Node
 
 # URL's for feeds to merge. Do not use weird chars in key.
 rssUrls = {
+	"debsec":"http://www.debian.org/security/dsa-long",
 	"osnews":"http://www.osnews.com/files/recent.rdf",
 	"devchannel":"http://www.devchannel.org/index.rss",
 	"linuxsecurity":"http://www.linuxsecurity.com/linuxsecurity_articles.rdf",
@@ -43,7 +46,11 @@ rssUrls = {
 	"nooface":"http://nooface.net/nooface.rdf",
 	"debianplanet":"http://www.debianplanet.org/module.php?mod=node&op=feed",
 	"artima":"http://www.artima.com/newatartima.rss",
-	"theregister":"http://www.theregister.co.uk/headlines.rss",
+	"geekpress":"http://www.geekpress.com/index.rdf",
+	"linuxcom":"http://www.linux.com/index.rss",
+	"newsforge":"http://www.newsforge.com/index.rss",
+	"gnomefiles":"http://www.gnomefiles.org/files/gnomefiles.rdf",
+	"joel":"http://www.joelonsoftware.com/rss.xml",
 }
 
 rssItemsMax = 60 
@@ -187,7 +194,7 @@ def usage():
 	print "  -v, --verbose       Be verbose"
 	print "  -h, --help          Show short help message (this)"
 	print
-	print "(C) Ferry Boender, 2004 <f DOT boender AT electricmonk DOT nl>"
+	print "(C) Ferry Boender, 2004-2005 <f DOT boender AT electricmonk DOT nl>"
 
 # Parse commandline options
 try:
@@ -253,37 +260,40 @@ for rssID in rssUrls.keys():
 		if not silent:
 			print "Cannot parse " + rssUrls[rssID] + ": " + str(sys.exc_info()[1])
 	else:
-		# Extract all items
-		node = root.firstChild
-		rssItemsPub = rssFindItems(node, rssItemsPub, rssID)
+		# Walk through all root-items (handles xml-stylesheet, etc)
+		for rootNode in root.childNodes:
+			if rootNode.nodeType == Node.ELEMENT_NODE:
+				# Extract all items
+				node = rootNode
+				rssItemsPub = rssFindItems(node, rssItemsPub, rssID)
 
-		if len(rssItemsPub) > 0:
-			# Find last seen item for this feed
-			lastId = -1
-			for i in range(len(rssItemsLastSeen)):
-				if verbose:
-					print "Find last seen: " + rssItemsLastSeen[i]["publisher"] + " - " + rssID
-				if rssItemsLastSeen[i]["publisher"] == rssID:
-					lastId = i
+				if len(rssItemsPub) > 0:
+					# Find last seen item for this feed
+					lastId = -1
+					for i in range(len(rssItemsLastSeen)):
+						if verbose:
+							print "Find last seen: " + rssItemsLastSeen[i]["publisher"] + " - " + rssID
+						if rssItemsLastSeen[i]["publisher"] == rssID:
+							lastId = i
+							
+					rssItemLastSeenTitle = ""
+					if lastId > -1:
+						rssItemLastSeenTitle = rssItemsLastSeen[lastId]["title"]
+						if verbose:
+							print "Last seen for " + rssID + ": " + rssItemLastSeenTitle
 					
-			rssItemLastSeenTitle = ""
-			if lastId > -1:
-				rssItemLastSeenTitle = rssItemsLastSeen[lastId]["title"]
-				if verbose:
-					print "Last seen for " + rssID + ": " + rssItemLastSeenTitle
-			
-			# First extract all new rss items
-			for rssItem in rssItemsPub:
-				if rssItem["title"] == rssItemLastSeenTitle:
-					# No more new items, stop extracting from published
-					break
-				else:
-					# Ah, a new item. Let's add it to the merged list of seen and unseen items
-					if len(rssItemsMerged) < rssItemsMax:
-						rssItemsMerged.append (rssItem)
+					# First extract all new rss items
+					for rssItem in rssItemsPub:
+						if rssItem["title"] == rssItemLastSeenTitle:
+							# No more new items, stop extracting from published
+							break
+						else:
+							# Ah, a new item. Let's add it to the merged list of seen and unseen items
+							if len(rssItemsMerged) < rssItemsMax:
+								rssItemsMerged.append (rssItem)
 
-			# Save the new latest seen item
-			rssItemsNewLastSeen.append (rssItemsPub[0])
+					# Save the new latest seen item
+					rssItemsNewLastSeen.append (rssItemsPub[0])
 
 # Now add all items we've already seen to the list too.
 for rssItem in rssItemsSeen:

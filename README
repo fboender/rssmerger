@@ -1,6 +1,6 @@
 
 
-RssMerger v0.2
+RssMerger v0.3
 
 
 What is it?
@@ -71,7 +71,7 @@ of the special options offered by rssmerger.py like the <rm:publisher> element.
 
 Copyright
 ---------
-Copyright (c) 2000-2003, Ferry Boender <f DOT boender AT electricmonk DOT nl>
+Copyright (c) 2003-2005, Ferry Boender <f DOT boender AT electricmonk DOT nl>
 Licensed under the General Public License (GPL), see COPYING file 
 provided with this program.
 
