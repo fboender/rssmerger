@@ -24,7 +24,28 @@
 #     Output feeds are now valid RSS 2.0
 # 0.3
 #     Multiple root nodes (xml-stylesheet) are now handled
+# 0.4
+#     Added --version parameter.
+#     Added copyright notice to source and --version output.
+#     Fixed a bug caused by empty <title> tags, thanks to Jeroen Leijen.
 #
+# Copyright (C) 2004-2005 Ferry Boender <f.boender@electricmonk.nl>"
+# 
+# This program is free software; you can redistribute it and/or modify"
+# it under the terms of the GNU General Public License as published by"
+# the Free Software Foundation; either version 2 of the License, or"
+# (at your option) any later version."
+# 
+# This program is distributed in the hope that it will be useful,"
+# but WITHOUT ANY WARRANTY; without even the implied warranty of"
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+# GNU General Public License for more details."
+# 
+# You should have received a copy of the GNU General Public License"
+# along with this program; if not, write to the Free Software"
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA"
+#
+
 import sys
 import urllib
 import time
@@ -34,23 +55,7 @@ from xml.dom import minidom, Node
 
 # URL's for feeds to merge. Do not use weird chars in key.
 rssUrls = {
-	"debsec":"http://www.debian.org/security/dsa-long",
-	"osnews":"http://www.osnews.com/files/recent.rdf",
-	"devchannel":"http://www.devchannel.org/index.rss",
-	"linuxsecurity":"http://www.linuxsecurity.com/linuxsecurity_articles.rdf",
-	"kuro5hin":"http://www.kuro5hin.org/backend.rdf",
-	"slashdot":"http://slashdot.org/index.rss",
-	"lwn":"http://lwn.net/headlines/rss",
-	"gnomenews":"http://news.gnome.org/gnome-news/rdf",
-	"oreilly":"http://www.oreillynet.com/meerkat/?&p=7619&_fl=rss10",
-	"nooface":"http://nooface.net/nooface.rdf",
-	"debianplanet":"http://www.debianplanet.org/module.php?mod=node&op=feed",
-	"artima":"http://www.artima.com/newatartima.rss",
-	"geekpress":"http://www.geekpress.com/index.rdf",
-	"linuxcom":"http://www.linux.com/index.rss",
-	"newsforge":"http://www.newsforge.com/index.rss",
-	"gnomefiles":"http://www.gnomefiles.org/files/gnomefiles.rdf",
-	"joel":"http://www.joelonsoftware.com/rss.xml",
+	"test":"http://intranet.electricmonk.nl/temp/bla.rss",
 }
 
 rssItemsMax = 60 
@@ -138,6 +143,7 @@ def rssExtractItem (node, rssID):
 	"""
 	
 	rssItem = {}
+
 	for childNode in node.childNodes:
 		if childNode.firstChild != None:
 			if childNode.nodeName == "title":
@@ -150,6 +156,12 @@ def rssExtractItem (node, rssID):
 				rssItem["publisher"] = childNode.firstChild.data.strip()
 			if childNode.nodeName == "date":
 				rssItem["date"] = childNode.firstChild.data.strip()
+
+	if not rssItem.has_key("title"):
+		rssItem["title"] = "No title"
+	
+	if not rssItem.has_key("link"):
+		rssItem["link"] = "http://localhost/"
 
 	if not rssItem.has_key("publisher"):
 		rssItem["publisher"] = rssID
@@ -192,13 +204,37 @@ def usage():
 	print "  -s, --silent        Silent. Do not report errors in RSS files"
 	print "  -i, --items ITEMS   Only keep ITEMS rss items in merged list"
 	print "  -v, --verbose       Be verbose"
+	print "  -V, --version       Show version information"
 	print "  -h, --help          Show short help message (this)"
 	print
 	print "(C) Ferry Boender, 2004-2005 <f DOT boender AT electricmonk DOT nl>"
 
+def version():
+	"""
+	Print version and other information to stdout
+	"""
+
+	print "RSSmerger v0.4"
+	print 
+	print "Copyright (C) 2004-2005 Ferry Boender <f.boender@electricmonk.nl>"
+	print
+	print "This program is free software; you can redistribute it and/or modify"
+	print "it under the terms of the GNU General Public License as published by"
+	print "the Free Software Foundation; either version 2 of the License, or"
+	print "(at your option) any later version."
+	print
+	print "This program is distributed in the hope that it will be useful,"
+	print "but WITHOUT ANY WARRANTY; without even the implied warranty of"
+	print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+	print "GNU General Public License for more details."
+	print
+	print "You should have received a copy of the GNU General Public License"
+	print "along with this program; if not, write to the Free Software"
+	print "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA"
+
 # Parse commandline options
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hsvi:", ["help", "silent", "verbose", "items:"])
+	opts, args = getopt.getopt(sys.argv[1:], "hsvVi:", ["help", "silent", "verbose", "version", "items:"])
 except getopt.GetoptError:
 	usage()
 	sys.exit(2)
@@ -212,6 +248,9 @@ for o, a in opts:
 		rssItemsMax = a
 	if o in ("-v", "--verbose"):
 		verbose = 1
+	if o in ("-V", "--version"):
+		version()
+		sys.exit()
 		
 # Get seen items
 rssItemsSeen = []
