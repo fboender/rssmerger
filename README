@@ -25,6 +25,7 @@ which items from each feed rssmerger has already merged into merged.rss.
 rssmerger.py takes a couple of options:
 
 -s, --silent        Silent. Do not report errors in RSS files
+-q, --queries       Output all new RSS items as SQL queries
 -i, --items ITEMS   Only keep ITEMS rss items in merged list
 -v, --verbose       Be verbose
 -h, --help          Show short help message (this)
@@ -49,7 +50,7 @@ rssUrls = {
 
 RSS publisher element
 ---------------------
-The key is needed so rssmerger nows from which feed the items came. It's 
+The key is needed so rssmerger knows from which feed the items came. It's 
 also added to the merged.rss so you can determine in your rss feed reader
 who published the item. The key is put in the feed as
 
@@ -62,6 +63,23 @@ The "rm" namespace is defined as:
 You can use the rm:publisher element in your feed reader and show an icon
 for it or something.
 
+Database queries
+----------------
+
+If you want RssMerger to add new items to a database, you can use the --queries
+option. This will output a query for each new item found. You can call
+RssMerger with this option from a shellscript which puts the queries in a
+database.
+
+The database structure can be found in rssmerger.sql. A sample script looks 
+like this (MySQL):
+
+  ----- CUT HERE -- 8< ------------------------------------------------------
+  #!/bin/sh
+  
+  rssmerger.py --queries  | mysql -u todsah -ppassword -h dbhost rssmerger
+  ----- CUT HERE -- 8< ------------------------------------------------------
+
 
 Sample feed reader
 ------------------
@@ -71,7 +89,7 @@ of the special options offered by rssmerger.py like the <rm:publisher> element.
 
 Copyright
 ---------
-Copyright (c) 2003-2005, Ferry Boender <f DOT boender AT electricmonk DOT nl>
+Copyright (c) 2003-2006, Ferry Boender <f DOT boender AT electricmonk DOT nl>
 Licensed under the General Public License (GPL), see COPYING file 
 provided with this program.
 
@@ -81,3 +99,4 @@ Author
 
 Ferry Boender <f DOT boender AT electricmonk DOT nl>
 http://www.electricmonk.nl
+

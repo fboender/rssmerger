@@ -28,8 +28,11 @@
 #     Added --version parameter.
 #     Added copyright notice to source and --version output.
 #     Fixed a bug caused by empty <title> tags, thanks to Jeroen Leijen.
+# 0.5
+#     Added --queries parameter. It tells RssMerger to output SQL queries
+#     that will insert items into a database.
 #
-# Copyright (C) 2004-2005 Ferry Boender <f.boender@electricmonk.nl>"
+# Copyright (C) 2004-2006 Ferry Boender <f.boender@electricmonk.nl>"
 # 
 # This program is free software; you can redistribute it and/or modify"
 # it under the terms of the GNU General Public License as published by"
@@ -55,13 +58,13 @@ from xml.dom import minidom, Node
 
 # URL's for feeds to merge. Do not use weird chars in key.
 rssUrls = {
-	"test":"http://intranet.electricmonk.nl/temp/bla.rss",
+	"test":"http://intranet.electricmonk.nl/test.rss",
 }
 
 rssItemsMax = 60 
 silent = 0 
 verbose = 0
-
+queries = False
 
 def rssFetch (url):
 	"""
@@ -202,12 +205,13 @@ def usage():
 	print
 	print "Arguments:"
 	print "  -s, --silent        Silent. Do not report errors in RSS files"
+	print "  -q, --queries       Output all new RSS items as SQL queries"
 	print "  -i, --items ITEMS   Only keep ITEMS rss items in merged list"
 	print "  -v, --verbose       Be verbose"
 	print "  -V, --version       Show version information"
 	print "  -h, --help          Show short help message (this)"
 	print
-	print "(C) Ferry Boender, 2004-2005 <f DOT boender AT electricmonk DOT nl>"
+	print "(C) Ferry Boender, 2004-2006 <f DOT boender AT electricmonk DOT nl>"
 
 def version():
 	"""
@@ -216,7 +220,7 @@ def version():
 
 	print "RSSmerger v0.4"
 	print 
-	print "Copyright (C) 2004-2005 Ferry Boender <f.boender@electricmonk.nl>"
+	print "Copyright (C) 2004-2006 Ferry Boender <f.boender@electricmonk.nl>"
 	print
 	print "This program is free software; you can redistribute it and/or modify"
 	print "it under the terms of the GNU General Public License as published by"
@@ -234,7 +238,7 @@ def version():
 
 # Parse commandline options
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "hsvVi:", ["help", "silent", "verbose", "version", "items:"])
+	opts, args = getopt.getopt(sys.argv[1:], "hsqvVi:", ["help", "silent", "queries", "verbose", "version", "items:"])
 except getopt.GetoptError:
 	usage()
 	sys.exit(2)
@@ -244,6 +248,8 @@ for o, a in opts:
 		sys.exit()
 	if o in ("-s", "--silent"):
 		silent = 1
+	if o in ("-q", "--queries"):
+		queries = 1
 	if o in ("-i", "--items"):
 		rssItemsMax = a
 	if o in ("-v", "--verbose"):
@@ -285,6 +291,7 @@ else:
 	
 # Merge seen items and new published items
 rssItemsMerged = []
+rssItemsNew = []
 rssItemsNewLastSeen = []
 
 for rssID in rssUrls.keys():
@@ -330,6 +337,8 @@ for rssID in rssUrls.keys():
 							# Ah, a new item. Let's add it to the merged list of seen and unseen items
 							if len(rssItemsMerged) < rssItemsMax:
 								rssItemsMerged.append (rssItem)
+							# Also add it to a seperate list of all new items
+							rssItemsNew.append(rssItem)
 
 					# Save the new latest seen item
 					rssItemsNewLastSeen.append (rssItemsPub[0])
@@ -353,21 +362,26 @@ for rssID in rssUrls.keys():
 			if rssItem["publisher"] == rssID:
 				rssItemsNewLastSeen.append (rssItem)
 
-# Write the new merged list of items to a rss file
-try:
-	rssWrite (
-	"merged.rss", 
-	"rssmerger Merged items", 
-	"This file contains items which have been merged from various RSS feeds", 
-	"http://www.electricmonk.nl", 
-	rssItemsMerged
-	)
-except IOError:
-	if not silent:
-		print "couldn't write merged.rss file" + str(sys.exc_value)
-except:
-	if not silent:
-		print "Unknow error: " + str(sys.exc_value)
+if queries:
+	rssItemsNew.reverse()
+	for rssItem in rssItemsNew:
+		print "INSERT INTO rssitems (title, link, date, publisher, description) VALUES ('%s','%s','%s','%s', '%s');" % (rssItem["title"].replace('\'', '\\\''), rssItem["link"].replace('\'', '\\\''), rssItem["date"].replace('\'', '\\\''), rssItem["publisher"].replace('\'', '\\\''), rssItem["description"].replace('\'', '\\\''));
+else:
+	# Write the new merged list of items to a rss file
+	try:
+		rssWrite (
+		"merged.rss", 
+		"rssmerger Merged items", 
+		"This file contains items which have been merged from various RSS feeds", 
+		"http://www.electricmonk.nl", 
+		rssItemsMerged
+		)
+	except IOError:
+		if not silent:
+			print "couldn't write merged.rss file" + str(sys.exc_value)
+	except:
+		if not silent:
+			print "Unknow error: " + str(sys.exc_value)
 
 # Write the new list of seen items to a rss file
 try:
