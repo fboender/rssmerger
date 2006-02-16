@@ -13,6 +13,7 @@ original feeds.
 Requirements
 ------------
 - Python 2.1+
+- PyXML
 
 
 Running
@@ -80,6 +81,8 @@ like this (MySQL):
   rssmerger.py --queries  | mysql -u todsah -ppassword -h dbhost rssmerger
   ----- CUT HERE -- 8< ------------------------------------------------------
 
+Please note that RssMerger outputs queries in the Latin-1 encoding. Your
+database tables should also use this encoding.
 
 Sample feed reader
 ------------------

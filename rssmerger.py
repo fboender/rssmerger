@@ -58,7 +58,7 @@ from xml.dom import minidom, Node
 
 # URL's for feeds to merge. Do not use weird chars in key.
 rssUrls = {
-	"test":"http://intranet.electricmonk.nl/test.rss",
+	"test":"http://localhost/myfeed.rss",
 }
 
 rssItemsMax = 60 
@@ -199,7 +199,7 @@ def usage():
 	"""
 
 	print "Usage: "+sys.argv[0]+" [OPTION]"
-	print "Merges the items in a couple of RDF RSS feeds to a single RSS feed."
+	print "Merges the items in a couple of RSS feeds to a single RSS feed."
 	print "Appearance of new items over time are remembered and added in the"
 	print "correct sequence"
 	print
@@ -365,6 +365,9 @@ for rssID in rssUrls.keys():
 if queries:
 	rssItemsNew.reverse()
 	for rssItem in rssItemsNew:
+		# Remove Unicode encodings for Database.
+		for property in rssItem:
+			rssItem[property] = rssItem[property].encode('latin-1', 'replace')
 		print "INSERT INTO rssitems (title, link, date, publisher, description) VALUES ('%s','%s','%s','%s', '%s');" % (rssItem["title"].replace('\'', '\\\''), rssItem["link"].replace('\'', '\\\''), rssItem["date"].replace('\'', '\\\''), rssItem["publisher"].replace('\'', '\\\''), rssItem["description"].replace('\'', '\\\''));
 else:
 	# Write the new merged list of items to a rss file
