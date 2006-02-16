@@ -73,7 +73,6 @@ def rssFetch (url):
 
 	f_rss = urllib.urlopen (url)
 	return f_rss.read()
-    
 
 def rssWrite (filename, channelTitle, channelDescription, channelLink, items):
 	"""
@@ -176,7 +175,6 @@ def rssExtractItem (node, rssID):
 		print "Item: " + rssItem["publisher"] + ": " + rssItem["title"]
 
 	return rssItem
-    
 
 def rssFindItems(node, rssItems, rssID):
 	"""
@@ -191,7 +189,6 @@ def rssFindItems(node, rssItems, rssID):
 				rssFindItems(childNode, rssItems, rssID)
 
 	return (rssItems)
-    
 
 def usage():
 	"""
