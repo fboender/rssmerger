@@ -2,7 +2,7 @@
 # RSS Merger 
 #
 # This file contains the structure for a MySQL table for which RssMerger (0.5+)
-# can create INSERT queries. The table-encoding should be Latin-1.
+# can create INSERT queries. 
 #
 
 # Host: sharky

@@ -81,8 +81,10 @@ like this (MySQL):
   rssmerger.py --queries  | mysql -u todsah -ppassword -h dbhost rssmerger
   ----- CUT HERE -- 8< ------------------------------------------------------
 
-Please note that RssMerger outputs queries in the Latin-1 encoding. Your
-database tables should also use this encoding.
+Please note that RssMerger outputs queries in the ASCII encoding which causes
+special characters (for instance, with accents) to be replaced with a '?'. There
+is no other way of handling this because the queries are written to stdout and
+we can't assume it supports anything other than ASCII.
 
 Sample feed reader
 ------------------

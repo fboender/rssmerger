@@ -58,7 +58,7 @@ from xml.dom import minidom, Node
 
 # URL's for feeds to merge. Do not use weird chars in key.
 rssUrls = {
-	"test":"http://localhost/myfeed.rss",
+	"test":"http://tweakers.net/feeds/meuktracker.xml",
 }
 
 rssItemsMax = 60 
@@ -364,8 +364,9 @@ if queries:
 	for rssItem in rssItemsNew:
 		# Remove Unicode encodings for Database.
 		for property in rssItem:
-			rssItem[property] = rssItem[property].encode('latin-1', 'replace')
-		print "INSERT INTO rssitems (title, link, date, publisher, description) VALUES ('%s','%s','%s','%s', '%s');" % (rssItem["title"].replace('\'', '\\\''), rssItem["link"].replace('\'', '\\\''), rssItem["date"].replace('\'', '\\\''), rssItem["publisher"].replace('\'', '\\\''), rssItem["description"].replace('\'', '\\\''));
+			rssItem[property] = rssItem[property].encode('ascii', 'replace')
+		qry = "INSERT INTO rssitems (title, link, date, publisher, description) VALUES ('%s','%s','%s','%s', '%s');" % (rssItem["title"].replace('\'', '\\\''), rssItem["link"].replace('\'', '\\\''), rssItem["date"].replace('\'', '\\\''), rssItem["publisher"].replace('\'', '\\\''), rssItem["description"].replace('\'', '\\\''))
+		print qry
 else:
 	# Write the new merged list of items to a rss file
 	try:
