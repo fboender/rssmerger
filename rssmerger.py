@@ -31,8 +31,11 @@
 # 0.5
 #     Added --queries parameter. It tells RssMerger to output SQL queries
 #     that will insert items into a database.
+# 0.6
+#     Better handling of unicode when doing verbose outputting.
+#     'content:encoded' tags in RSS items are now recognised as a description.
 #
-# Copyright (C) 2004-2006 Ferry Boender <f.boender@electricmonk.nl>"
+# Copyright (C) 2004-2007 Ferry Boender <f.boender@electricmonk.nl>"
 # 
 # This program is free software; you can redistribute it and/or modify"
 # it under the terms of the GNU General Public License as published by"
@@ -139,40 +142,45 @@ def rssComposeItem (item):
 	return elemItem
 	
 
+def rssItemElementGetData (node, rssID):
+	global verbose
+	if hasattr(node, 'data'):
+		return(node.data.strip())
+	else:
+		if verbose:
+			print "Node has no data in %s! (HTML tag in data?)" % (rssID)
+		return("??")
+
 def rssExtractItem (node, rssID):
 	"""
 	Given an <item> node, extract all possible RSS information from the node
 	"""
 	
-	rssItem = {}
+	rssItem = {
+		"title": "No title",
+		"link": "http://localhost/",
+		"description": "No description",
+		"publisher": rssId,
+		"date": time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
+	}
 
 	for childNode in node.childNodes:
 		if childNode.firstChild != None:
 			if childNode.nodeName == "title":
-				rssItem["title"] = childNode.firstChild.data.strip()
+				rssItem["title"] = rssItemElementGetData(childNode.firstChild, rssID)
 			if childNode.nodeName == "link":
-				rssItem["link"] = childNode.firstChild.data.strip()
+				rssItem["link"] = rssItemElementGetData(childNode.firstChild, rssID)
 			if childNode.nodeName == "description":
-				rssItem["description"] = childNode.firstChild.data.strip()
+				rssItem["description"] = rssItemElementGetData(childNode.firstChild, rssID)
+			if childNode.nodeName == "content:encoded":
+				rssItem["description"] = rssItemElementGetData(childNode.firstChild, rssID)
 			if childNode.nodeName == "rm:publisher":
-				rssItem["publisher"] = childNode.firstChild.data.strip()
+				rssItem["publisher"] = rssItemElementGetData(childNode.firstChild, rssID)
 			if childNode.nodeName == "date":
-				rssItem["date"] = childNode.firstChild.data.strip()
+				rssItem["date"] = rssItemElementGetData(childNode.firstChild, rssID)
 
-	if not rssItem.has_key("title"):
-		rssItem["title"] = "No title"
-	
-	if not rssItem.has_key("link"):
-		rssItem["link"] = "http://localhost/"
-
-	if not rssItem.has_key("publisher"):
-		rssItem["publisher"] = rssID
-				
-	if not rssItem.has_key("date"):
-		rssItem["date"] = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
-		
 	if verbose:
-		print "Item: " + rssItem["publisher"] + ": " + rssItem["title"]
+		print "Item: " + rssItem["publisher"].encode('ascii', 'replace') + ": " + rssItem["title"].encode('ascii', 'replace')
 
 	return rssItem
 
@@ -184,7 +192,7 @@ def rssFindItems(node, rssItems, rssID):
 	if node.nodeType == Node.ELEMENT_NODE:
 		for childNode in node.childNodes:
 			if childNode.nodeName == "item":
-				rssItems.append (rssExtractItem (childNode, rssID))
+				rssItems.append(rssExtractItem(childNode, rssID))
 			else:
 				rssFindItems(childNode, rssItems, rssID)
 
@@ -308,6 +316,9 @@ for rssID in rssUrls.keys():
 			if rootNode.nodeType == Node.ELEMENT_NODE:
 				# Extract all items
 				node = rootNode
+				if verbose:
+					print "Finding all published items in '%s'" % (rssID)
+
 				rssItemsPub = rssFindItems(node, rssItemsPub, rssID)
 
 				if len(rssItemsPub) > 0:
@@ -315,7 +326,7 @@ for rssID in rssUrls.keys():
 					lastId = -1
 					for i in range(len(rssItemsLastSeen)):
 						if verbose:
-							print "Find last seen: " + rssItemsLastSeen[i]["publisher"] + " - " + rssID
+							print "Find last seen: " + rssItemsLastSeen[i]["publisher"].encode('ascii', 'replace') + " - " + rssID
 						if rssItemsLastSeen[i]["publisher"] == rssID:
 							lastId = i
 							
@@ -323,7 +334,7 @@ for rssID in rssUrls.keys():
 					if lastId > -1:
 						rssItemLastSeenTitle = rssItemsLastSeen[lastId]["title"]
 						if verbose:
-							print "Last seen for " + rssID + ": " + rssItemLastSeenTitle
+							print "Last seen for " + rssID + ": " + rssItemLastSeenTitle.encode('ascii', 'replace')
 					
 					# First extract all new rss items
 					for rssItem in rssItemsPub:
