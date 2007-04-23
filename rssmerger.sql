@@ -1,7 +1,7 @@
 #
 # RSS Merger 
 #
-# This file contains the structure for a MySQL table for which RssMerger (0.5+)
+# This file contains the structure for a MySQL table for which RssMerger (0.6+)
 # can create INSERT queries. 
 #
 

@@ -223,7 +223,7 @@ def version():
 	Print version and other information to stdout
 	"""
 
-	print "RSSmerger v0.4"
+	print "RSSmerger v0.6"
 	print 
 	print "Copyright (C) 2004-2006 Ferry Boender <f.boender@electricmonk.nl>"
 	print
