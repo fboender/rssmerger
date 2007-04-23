@@ -160,7 +160,7 @@ def rssExtractItem (node, rssID):
 		"title": "No title",
 		"link": "http://localhost/",
 		"description": "No description",
-		"publisher": rssId,
+		"publisher": rssID,
 		"date": time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 	}
 
