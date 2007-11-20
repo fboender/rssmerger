@@ -34,6 +34,9 @@
 # 0.6
 #     Better handling of unicode when doing verbose outputting.
 #     'content:encoded' tags in RSS items are now recognised as a description.
+# 0.7
+#     Timeouts set on retrieving of individual feeds (10 sec).
+#     Various changes in logging/error reporting.
 #
 # Copyright (C) 2004-2007 Ferry Boender <f.boender@electricmonk.nl>"
 # 
@@ -53,6 +56,7 @@
 #
 
 import sys
+import socket
 import urllib
 import time
 import getopt
@@ -69,12 +73,18 @@ silent = 0
 verbose = 0
 queries = False
 
-def rssFetch (url):
+def rssFetch(url):
 	"""
 	Fetch a RSS file from somewhere.
 	"""
 
-	f_rss = urllib.urlopen (url)
+	try:
+		f_rss = urllib.urlopen (url)
+	except IOError, e:
+		if not silent and url != 'merged.rss' and url != 'seen.rss':
+			print "Failed to retrieve RSS feed %s" % (url)
+		return False
+
 	return f_rss.read()
 
 def rssWrite (filename, channelTitle, channelDescription, channelLink, items):
@@ -180,7 +190,7 @@ def rssExtractItem (node, rssID):
 				rssItem["date"] = rssItemElementGetData(childNode.firstChild, rssID)
 
 	if verbose:
-		print "Item: " + rssItem["publisher"].encode('ascii', 'replace') + ": " + rssItem["title"].encode('ascii', 'replace')
+		print "\t\tItem: " + rssItem["publisher"].encode('ascii', 'replace') + ": " + rssItem["title"].encode('ascii', 'replace')
 
 	return rssItem
 
@@ -216,16 +226,16 @@ def usage():
 	print "  -V, --version       Show version information"
 	print "  -h, --help          Show short help message (this)"
 	print
-	print "(C) Ferry Boender, 2004-2006 <f DOT boender AT electricmonk DOT nl>"
+	print "(C) Ferry Boender, 2004-2007 <f DOT boender AT electricmonk DOT nl>"
 
 def version():
 	"""
 	Print version and other information to stdout
 	"""
 
-	print "RSSmerger v0.6"
+	print "RSSmerger v0.7"
 	print 
-	print "Copyright (C) 2004-2006 Ferry Boender <f.boender@electricmonk.nl>"
+	print "Copyright (C) 2004-2007 Ferry Boender <f.boender@electricmonk.nl>"
 	print
 	print "This program is free software; you can redistribute it and/or modify"
 	print "it under the terms of the GNU General Public License as published by"
@@ -262,37 +272,43 @@ for o, a in opts:
 	if o in ("-V", "--version"):
 		version()
 		sys.exit()
+
+# Set default socket timeout so urllib doesn't hang when retrieving RSS feeds
+socket.setdefaulttimeout(10) 
 		
 # Get seen items
 rssItemsSeen = []
 try:
-	rssSeen = rssFetch ("merged.rss")
-	root = minidom.parseString(rssSeen)
-except IOError:
-	pass
+	rssSeen = rssFetch("merged.rss")
+	if rssSeen:
+		root = minidom.parseString(rssSeen)
+	else:
+		root = minidom.Document()
 except:
 	if not silent:
 		print "Cannot parse merged.rss: " + str(sys.exc_info()[1])
 else:
 	# Extract all seen items
-	node = root.firstChild
-	rssItemsSeen = rssFindItems(node, rssItemsSeen, "seen")
+	if rssSeen:
+		node = root.firstChild
+		rssItemsSeen = rssFindItems(node, rssItemsSeen, "seen")
 
 # Get last seen items (to determine which items are new)
 rssItemsLastSeen = []
 try:
-	rssSeen = rssFetch ("seen.rss")
-	root = minidom.parseString(rssSeen)
-
-except IOError:
-	pass
+	rssSeen = rssFetch("seen.rss")
+	if rssSeen:
+		root = minidom.parseString(rssSeen)
+	else:
+		root = minidom.Document()
 except:
 	if not silent:
 		print "Cannot parse seen.rss: " + str(sys.exc_info()[1])
 else:
 	# Extract all seen items
-	node = root.firstChild
-	rssItemsLastSeen = rssFindItems(node, rssItemsLastSeen, "lastseen")
+	if rssSeen:
+		node = root.firstChild
+		rssItemsLastSeen = rssFindItems(node, rssItemsLastSeen, "lastseen")
 	
 # Merge seen items and new published items
 rssItemsMerged = []
@@ -300,12 +316,22 @@ rssItemsNew = []
 rssItemsNewLastSeen = []
 
 for rssID in rssUrls.keys():
+	if verbose:
+		print "Processing %s" % (rssID)
 
 	rssItemsPub = []
 	
 	# Read published items
 	try:
-		rssPub = rssFetch (rssUrls[rssID])
+		if verbose:
+			print "\tRetrieving %s" % (rssUrls[rssID])
+		rssPub = rssFetch(rssUrls[rssID])
+		if not rssPub:
+			if not silent:
+				print "\tError"
+		else:
+			if verbose:
+				print "\tRetrieved."
 		root = minidom.parseString(rssPub)
 	except:
 		if not silent:
@@ -317,7 +343,7 @@ for rssID in rssUrls.keys():
 				# Extract all items
 				node = rootNode
 				if verbose:
-					print "Finding all published items in '%s'" % (rssID)
+					print "\tFinding all published items in '%s'" % (rssID)
 
 				rssItemsPub = rssFindItems(node, rssItemsPub, rssID)
 
@@ -334,7 +360,7 @@ for rssID in rssUrls.keys():
 					if lastId > -1:
 						rssItemLastSeenTitle = rssItemsLastSeen[lastId]["title"]
 						if verbose:
-							print "Last seen for " + rssID + ": " + rssItemLastSeenTitle.encode('ascii', 'replace')
+							print "\tLast seen for " + rssID + ": " + rssItemLastSeenTitle.encode('ascii', 'replace')
 					
 					# First extract all new rss items
 					for rssItem in rssItemsPub:
