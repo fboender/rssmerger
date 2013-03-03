@@ -9,6 +9,11 @@ rssmerger is a python script which merges multiple RSS feeds into a single
 feed while maintaining the correct order in which items appeared in the 
 original feeds.
 
+### Screenshots
+
+You can find some screenshots here:
+
+*   [Screenshots](https://bitbucket.org/fboender/rssmerger/wiki/Screenshots)
 
 Requirements
 ------------
