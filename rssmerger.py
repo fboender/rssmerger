@@ -18,25 +18,25 @@
 #
 # Changelog:
 # 0.2 
-#     Added --items parameter
-#     Added correct writing of XML RSS files (using DOM)
-#     Added namespaces ('id' is now 'rm:publisher')
-#     Output feeds are now valid RSS 2.0
+#	 Added --items parameter
+#	 Added correct writing of XML RSS files (using DOM)
+#	 Added namespaces ('id' is now 'rm:publisher')
+#	 Output feeds are now valid RSS 2.0
 # 0.3
-#     Multiple root nodes (xml-stylesheet) are now handled
+#	 Multiple root nodes (xml-stylesheet) are now handled
 # 0.4
-#     Added --version parameter.
-#     Added copyright notice to source and --version output.
-#     Fixed a bug caused by empty <title> tags, thanks to Jeroen Leijen.
+#	 Added --version parameter.
+#	 Added copyright notice to source and --version output.
+#	 Fixed a bug caused by empty <title> tags, thanks to Jeroen Leijen.
 # 0.5
-#     Added --queries parameter. It tells RssMerger to output SQL queries
-#     that will insert items into a database.
+#	 Added --queries parameter. It tells RssMerger to output SQL queries
+#	 that will insert items into a database.
 # 0.6
-#     Better handling of unicode when doing verbose outputting.
-#     'content:encoded' tags in RSS items are now recognised as a description.
+#	 Better handling of unicode when doing verbose outputting.
+#	 'content:encoded' tags in RSS items are now recognised as a description.
 # 0.7
-#     Timeouts set on retrieving of individual feeds (10 sec).
-#     Various changes in logging/error reporting.
+#	 Timeouts set on retrieving of individual feeds (10 sec).
+#	 Various changes in logging/error reporting.
 #
 # Copyright (C) 2004-2007 Ferry Boender <f.boender@electricmonk.nl>"
 # 
@@ -60,8 +60,7 @@ import socket
 import urllib
 import time
 import getopt
-import xml.dom.ext
-from xml.dom import minidom, Node
+import xml.dom.minidom
 
 # URL's for feeds to merge. Do not use weird chars in key.
 rssUrls = {
@@ -108,7 +107,7 @@ def rssWrite (filename, channelTitle, channelDescription, channelLink, items):
 	rssNew.appendChild(elemRss)
 
 	rssFile = open(filename, "w")
-	xml.dom.ext.PrettyPrint(rssNew, rssFile)
+	rssFile.write(rssNew.toprettyxml())
 	rssFile.close()
 
 
@@ -129,6 +128,7 @@ def createElementTextNS (namespace, element, text):
 	"""
 
 	elemNew = xml.dom.minidom.Document().createElementNS(namespace, element)
+	elemNew.setAttribute("xmlns:" + element.split(':', 1)[0], namespace)
 	textNew = xml.dom.minidom.Document().createTextNode(text)
 	elemNew.appendChild(textNew)
 
@@ -199,7 +199,7 @@ def rssFindItems(node, rssItems, rssID):
 	Walk through a XML DOM and take action upon finding <item> nodes
 	"""
 
-	if node.nodeType == Node.ELEMENT_NODE:
+	if node.nodeType == xml.dom.Node.ELEMENT_NODE:
 		for childNode in node.childNodes:
 			if childNode.nodeName == "item":
 				rssItems.append(rssExtractItem(childNode, rssID))
@@ -219,12 +219,12 @@ def usage():
 	print "correct sequence"
 	print
 	print "Arguments:"
-	print "  -s, --silent        Silent. Do not report errors in RSS files"
-	print "  -q, --queries       Output all new RSS items as SQL queries"
+	print "  -s, --silent		Silent. Do not report errors in RSS files"
+	print "  -q, --queries	   Output all new RSS items as SQL queries"
 	print "  -i, --items ITEMS   Only keep ITEMS rss items in merged list"
-	print "  -v, --verbose       Be verbose"
-	print "  -V, --version       Show version information"
-	print "  -h, --help          Show short help message (this)"
+	print "  -v, --verbose	   Be verbose"
+	print "  -V, --version	   Show version information"
+	print "  -h, --help		  Show short help message (this)"
 	print
 	print "(C) Ferry Boender, 2004-2007 <f DOT boender AT electricmonk DOT nl>"
 
@@ -281,12 +281,13 @@ rssItemsSeen = []
 try:
 	rssSeen = rssFetch("merged.rss")
 	if rssSeen:
-		root = minidom.parseString(rssSeen)
+		root = xml.dom.minidom.parseString(rssSeen)
 	else:
-		root = minidom.Document()
+		root = xml.dom.minidom.Document()
 except:
 	if not silent:
 		print "Cannot parse merged.rss: " + str(sys.exc_info()[1])
+		raise
 else:
 	# Extract all seen items
 	if rssSeen:
@@ -298,12 +299,13 @@ rssItemsLastSeen = []
 try:
 	rssSeen = rssFetch("seen.rss")
 	if rssSeen:
-		root = minidom.parseString(rssSeen)
+		root = xml.dom.minidom.parseString(rssSeen)
 	else:
-		root = minidom.Document()
+		root = xml.dom.minidom.Document()
 except:
 	if not silent:
 		print "Cannot parse seen.rss: " + str(sys.exc_info()[1])
+		raise
 else:
 	# Extract all seen items
 	if rssSeen:
@@ -332,14 +334,14 @@ for rssID in rssUrls.keys():
 		else:
 			if verbose:
 				print "\tRetrieved."
-		root = minidom.parseString(rssPub)
+		root = xml.dom.minidom.parseString(rssPub)
 	except:
 		if not silent:
 			print "Cannot parse " + rssUrls[rssID] + ": " + str(sys.exc_info()[1])
 	else:
 		# Walk through all root-items (handles xml-stylesheet, etc)
 		for rootNode in root.childNodes:
-			if rootNode.nodeType == Node.ELEMENT_NODE:
+			if rootNode.nodeType == xml.dom.Node.ELEMENT_NODE:
 				# Extract all items
 				node = rootNode
 				if verbose:
