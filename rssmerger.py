@@ -14,7 +14,7 @@
 #
 # Usage: see rssmerger --help
 #  
-# Requires: Python 2.1+
+# Requires: Python 2.6+
 #
 # Changelog:
 # 0.2 
@@ -37,8 +37,11 @@
 # 0.7
 #	 Timeouts set on retrieving of individual feeds (10 sec).
 #	 Various changes in logging/error reporting.
+# 0.8
+#    Deprecate python-xml. Now uses built-in XML package.
+#    Python 2.6+ compatibility
 #
-# Copyright (C) 2004-2007 Ferry Boender <f.boender@electricmonk.nl>"
+# Copyright (C) 2004-2013 Ferry Boender <f.boender@electricmonk.nl>"
 # 
 # This program is free software; you can redistribute it and/or modify"
 # it under the terms of the GNU General Public License as published by"
@@ -226,16 +229,16 @@ def usage():
 	print "  -V, --version	   Show version information"
 	print "  -h, --help		  Show short help message (this)"
 	print
-	print "(C) Ferry Boender, 2004-2007 <f DOT boender AT electricmonk DOT nl>"
+	print "(C) Ferry Boender, 2004-2013 <ferry.boender@electricmonk.nl>"
 
 def version():
 	"""
 	Print version and other information to stdout
 	"""
 
-	print "RSSmerger v0.7"
+	print "RSSmerger v0.8"
 	print 
-	print "Copyright (C) 2004-2007 Ferry Boender <f.boender@electricmonk.nl>"
+	print "Copyright (C) 2004-2013 Ferry Boender <ferry.boender@electricmonk.nl>"
 	print
 	print "This program is free software; you can redistribute it and/or modify"
 	print "it under the terms of the GNU General Public License as published by"
