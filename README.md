@@ -18,7 +18,10 @@ You can find some screenshots here:
 Requirements
 ------------
 
-*   Python 2.1+
+*   Python 2.6+
+
+RssMerger can run on older Python versions (2.1+). In those cases, it requires:
+
 *   PyXML (`aptitude install python-xml`)
 
 
@@ -81,12 +84,13 @@ like this (MySQL):
 
     #!/bin/sh
 
-    rssmerger.py --queries  | mysql -u todsah -ppassword -h dbhost rssmerger
+    rssmerger.py --queries  | mysql -u fboender -ppassword -h dbhost rssmerger
 
 Please note that RssMerger outputs queries in the ASCII encoding which causes
 special characters (for instance, with accents) to be replaced with a '?'. There
 is no other way of handling this because the queries are written to stdout and
 we can't assume it supports anything other than ASCII.
+
 
 Sample feed reader
 ------------------
@@ -97,7 +101,7 @@ of the special options offered by rssmerger.py like the <rm:publisher> element.
 
 Copyright
 ---------
-Copyright (c) 2003-2013, Ferry Boender <f DOT boender AT electricmonk DOT nl>
+Copyright (c) 2003-2013, Ferry Boender <ferry DOT boender AT electricmonk DOT nl>
 Licensed under the General Public License (GPL), see COPYING file 
 provided with this program.
 
